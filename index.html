@@ -1,4 +1,394 @@
 <!DOCTYPE HTML>
-<script>
-  window.location.replace("https://github.com/cohaolain/PublicSubsetDifferenceProblem")
-</script>
+<html>
+	<head>
+		<title>CS Society - Subset Difference Problem</title>
+		<meta name="Description" content="Submit your answers to the CS Society Challenge, using an Ethereum Smart Contract!">
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<link rel="stylesheet" href="assets/css/my.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+		<div id="wrapper">
+			<div id="bg"></div>
+			<div id="main">
+
+				<!-- Header -->
+					<header id="header">
+						<h1>CS Society - Subset Difference Problem</h1>
+						<p>Submit your answers here!</p>
+						<nav>
+							<ul>
+								<li><a href="https://www.facebook.com/MUSOCIT/" alt="See our Facebook!" class="icon fa-facebook"><span class="label">See our Facebook!</span></a></li>
+								<li><a href="mailto:minds@nuimsu.com" alt="Contact us by Email" class="icon fa-envelope-o"><span class="label">Contact us by Email</span></a></li>
+								<li><a href="numbers.txt" alt="Get the problem set in plain text" class="icon fa-list-ol"><span class="label">Get the problem set in plain text</span></a></li>
+								<li><a href="https://github.com/cohaolain/PublicSubsetDifferenceProblem/blob/master/README.md" alt="Get the problem definition" class="icon fa-book"><span class="label">Get the problem definition</span></a></li>
+								<li style="cursor:pointer"><a onclick="donate()" alt="Donate to the prize pot" class="icon fa-usd"><span class="label">Donate to the prize pot</span></a></li>
+								<li><a id="contractSourceLink" href="" class="icon fa-code"><span class="label">Contract Source Code</span></a></li>
+							</ul>
+						</nav>
+						<card>
+							<p id="networkIdentifier">Your Metamask hasn't reported the current network yet.</p>
+							<p id="prizeAmount">The prize pot is currently worth €</p>
+							<table id="optionContainer"></table>
+							<button id=submitButton onclick="submitAnswer()" disabled>Submit!</button>
+							<p id="receiptText"><a id="receiptLink" href="">Click here to see your transaction</a> if your browser has blocked the popup.</p>
+						</card>
+					</header>
+
+				<!-- Footer -->
+					<footer id="footer">
+						<span class="copyright">&copy; <a href="https://cohaolain.ie/">Ciarán Ó hAoláin</a>, <a href="https://www.maynoothuniversity.ie/people/phil-maguire">Phil Maguire</a>, <a href="https://maynoothuniversity.ie/">Maynooth University</a> 2018</span>
+					</footer>
+
+			</div>
+		</div>
+		<script>
+			window.onload = function() { document.body.classList.remove('is-preload'); }
+			window.ontouchmove = function() { return false; }
+			window.onorientationchange = function() { document.body.scrollTop = 0; }
+		</script>
+		<script>
+			document.getElementById("optionContainer").style.display="none"
+			document.getElementById("prizeAmount").style.display="none"
+			document.getElementById("receiptText").style.display="none"
+			var ethAddress = "0x13007042a95CD4679E4BF080F755446150CeA081";
+			var ropstenAddress = "0x13007042a95CD4679E4BF080F755446150CeA081";
+			document.getElementById("contractSourceLink").href="https://etherscan.io/address/"+ethAddress+"#code"
+			if (typeof web3 !== 'undefined') {
+				web3 = new Web3(web3.currentProvider);
+			} else {
+				alert("You don't have MetaMask installed in your browser, please install and reload the page before continuing.");
+				throw new Error("Install Metamask!")
+			}
+			function createRadio(text, fieldId, value) {
+				let parent = document.createElement("td");
+				let element = document.createElement("label");
+				element.className="container";
+				element.innerHTML=text+'<input type="radio" onchange=getSubmissionSets() fId="'+fieldId+'" name="num'+fieldId+'" value="'+value+'"'+(value==0?'checked="checked"':'')+'><span class="radiocheck"></span>"'
+				parent.appendChild(element)
+				return parent
+			}
+			function addRadio(locationId, fieldId) {
+				let element = document.createElement("tr");
+				let header = document.createElement("th");
+				header.innerHTML = fieldId;
+				element.appendChild(header)
+				element.appendChild(createRadio("Neither ", fieldId, 0));
+				element.appendChild(createRadio("Negative Set ", fieldId, 1));
+				element.appendChild(createRadio("Positive Set ", fieldId, 2));
+				document.getElementById(locationId).appendChild(element);
+			}
+			abi=[
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"name": "newRecordHolder",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"name": "newRecordDifference",
+				"type": "uint256"
+			}
+		],
+		"name": "NewRecord",
+		"type": "event"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "addressesToAuthorise",
+				"type": "address[]"
+			}
+		],
+		"name": "authoriseEntrants",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "negativeSetSubmission",
+				"type": "uint256[]"
+			},
+			{
+				"name": "positiveSetSubmission",
+				"type": "uint256[]"
+			}
+		],
+		"name": "submitAnswer",
+		"outputs": [
+			{
+				"name": "response",
+				"type": "string"
+			}
+		],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "prizeRecipient",
+				"type": "address"
+			}
+		],
+		"name": "withdrawPrize",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"name": "submitter",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"name": "submitterSolutionDifference",
+				"type": "uint256"
+			}
+		],
+		"name": "RunnerUpSubmission",
+		"type": "event"
+	},
+	{
+		"payable": true,
+		"stateMutability": "payable",
+		"type": "fallback"
+	},
+	{
+		"inputs": [
+			{
+				"name": "setElements",
+				"type": "uint256[]"
+			},
+			{
+				"name": "expiry",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "getAuthor",
+		"outputs": [
+			{
+				"name": "authorName",
+				"type": "string"
+			}
+		],
+		"payable": false,
+		"stateMutability": "pure",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "getData",
+		"outputs": [
+			{
+				"name": "numberSet",
+				"type": "uint256[]"
+			},
+			{
+				"name": "winningAddress",
+				"type": "address"
+			},
+			{
+				"name": "prizeFundAmount",
+				"type": "uint256"
+			},
+			{
+				"name": "expiryTimestamp",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "getExpiryDate",
+		"outputs": [
+			{
+				"name": "expiryTimestamp",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "getNumbers",
+		"outputs": [
+			{
+				"name": "numberSet",
+				"type": "uint256[]"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "getPrizePot",
+		"outputs": [
+			{
+				"name": "prizeFundAmount",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "getRecord",
+		"outputs": [
+			{
+				"name": "winningAddress",
+				"type": "address"
+			},
+			{
+				"name": "difference",
+				"type": "uint256"
+			},
+			{
+				"name": "negativeSet",
+				"type": "uint256[]"
+			},
+			{
+				"name": "positiveSet",
+				"type": "uint256[]"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	}
+]
+
+			var instance;
+			var net = -1;
+			var numbers;
+			contract = web3.eth.contract(abi);
+			web3.version.getNetwork((err, netId) => {
+			  net = netId;
+			  switch (netId) {
+			    case "1":
+			      document.getElementById("networkIdentifier").innerHTML = "You are using the main Ethereum network.<br>";
+						document.getElementById("contractSourceLink").href="https://etherscan.io/address/"+ethAddress+"#code"
+			      instance = contract.at(ethAddress); // Put the main Ethereum network contract address here
+			      break
+			    case "2":
+			      document.getElementById("networkIdentifier").innerHTML ='You are using the Morden test network. The problem is currently not deployed here. Please switch to the Ropsten Network using Metamask for testing purposes.<br>';
+			      break
+			    case "3":
+			      document.getElementById("networkIdentifier").innerHTML ='You are using the Ropsten test network.<br>';
+						document.getElementById("contractSourceLink").href="https://ropsten.etherscan.io/address/"+ropstenAddress+"#code"
+			      instance = contract.at(ropstenAddress);
+			      break
+			    default:
+			      document.getElementById("networkIdentifier").innerHTML ='You are using an unknown network.<br>';
+			  }
+				instance.getPrizePot((error, result) => {
+					document.getElementById("prizeAmount").innerHTML+=convertToEUR(result/(1*(10**18)))+" / "+result/(1*(10**18))+" ETH"
+					document.getElementById("prizeAmount").style.display="block"
+				})
+				instance.getNumbers((error, result) => {
+					console.log(result);
+					//for (let n in result) document.getElementById("numberSet").innerHTML+=result[n]+(n==result.length-1?"":", ");
+					numbers = result;
+					numbers.sort((a, b) => (a - b))
+					for (let n in numbers) addRadio("optionContainer", numbers[n])
+					document.getElementById("optionContainer").style.display="inherit"
+				})
+			})
+			function donate() {
+				instance._eth.sendTransaction({"from":web3.eth.accounts[0], "to":(net==1?ethAddress:ropstenAddress)}, (error, result) => showReceipt(result))
+			}
+		</script>
+		<script>
+			if (typeof web3 === 'undefined') {
+				numbers = [5401592977081731, 6440476505532831, 15042041519988625, 20467528679925681, 22076843868676337, 26895787675448464, 34976635294853553, 36375014753131722, 69962528271893430, 80951893188532592, 82260848127777742, 114440145713753379, 133536973593247567, 134100801829071445, 193103273662662169, 228810939681073440, 333332867054942263, 347687508679605568, 400989167661537378, 434560043456917634, 437848327398756395, 448949407166528029, 455933993899985169, 484345467353981917, 516698581214914247, 521344233342096197, 531314426625562618, 543408397679436196, 584204774057591138, 620369647153593257, 647988088417515606, 662144009167515470, 702323294922726167, 771858641299003012, 776329537350744112, 803745179519786558, 840516798136693069, 936078491439999559, 938945607710839093, 960688503401057717]
+				document.getElementById("optionContainer").style.display="inherit"
+				for (number in numbers) addRadio("optionContainer", numbers[number])
+			} else {
+				web3.eth.getAccounts(function(err, accounts){
+					if (err != null) console.error("An error occurred: "+err);
+					else if (accounts.length == 0) alert("You aren't logged in to your MetaMask! Please log in.");
+					else console.log("User is logged in to MetaMask");
+				});
+			}
+		</script>
+		<script>
+			var negativeSet = []
+			var positiveSet = []
+		  function getSubmissionSets() {
+				positiveSet = []
+				negativeSet = []
+				let checked = document.querySelectorAll('input[type="radio"]:checked')
+				for (i = 0; i<checked.length; i++) {
+					if (checked[i].value>0) {
+						if (checked[i].value==1) negativeSet.push(checked[i].attributes.fid.value)
+						else positiveSet.push(checked[i].attributes.fid.value)
+					}
+				}
+				if (negativeSet.length + positiveSet.length > 0) document.getElementById("submitButton").disabled=false
+				else document.getElementById("submitButton").disabled=true
+				console.log(negativeSet, positiveSet)
+			}
+			function submitAnswer() {
+				instance.submitAnswer(negativeSet, positiveSet, (error, result) => showReceipt(result))
+			}
+			function showReceipt(result) {
+				console.log(result)
+				window.open("https://"+(net==1?"":"ropsten.")+"etherscan.io/tx/" + result);
+				document.getElementById("receiptLink").href="https://"+(net==1?"":"ropsten.")+"etherscan.io/tx/" + result
+				document.getElementById("receiptText").style.display="block"
+			}
+		</script>
+		<script>
+			var price = -1;
+			function convertToEUR(ethQuantity) {
+				if (price==-1) {
+					url = "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=EUR";
+					request = new XMLHttpRequest();
+					request.open("GET", url, false);
+					request.send()
+					price = JSON.parse(request.response)['EUR'];
+					console.log("1 ETH = €" + price);
+				}
+				return Math.round(ethQuantity*price*100)/100
+			}
+		</script>
+	</body>
+</html>
